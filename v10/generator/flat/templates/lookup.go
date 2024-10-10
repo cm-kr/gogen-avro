@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gertd/go-pluralize"
+	"strings"
 	"text/template"
 
 	avro "github.com/actgardner/gogen-avro/v10/schema"
 	"github.com/actgardner/gogen-avro/v10/schema/canonical"
 )
 
-var NoTemplateForType = fmt.Errorf("No template exists for supplied type")
+var NoTemplateForType = fmt.Errorf("no template exists for supplied type")
 
 func Template(t avro.Node) (string, error) {
 	var templateDef string
@@ -51,6 +53,7 @@ func Template(t avro.Node) (string, error) {
 
 func Evaluate(templateStr string, obj interface{}) (string, error) {
 	buf := &bytes.Buffer{}
+	p := pluralize.NewClient()
 	t, err := template.New("").Funcs(template.FuncMap{
 		"definitionFingerprint": func(def avro.Definition) (string, error) {
 			cf := canonical.DefinitionCanonicalForm(def)
@@ -62,6 +65,11 @@ func Evaluate(templateStr string, obj interface{}) (string, error) {
 
 			return convertByteToInitForm(fingerprint), err
 		},
+		"lowerFirst":     lowerFirst,
+		"isPlural":       p.IsPlural,
+		"isSingular":     p.IsSingular,
+		"plural":         p.Plural,
+		"singular":       p.Singular,
 		"isNullable":     isNullable,
 		"hasNullDefault": hasNullDefault,
 	}).Parse(templateStr)
@@ -93,4 +101,8 @@ func hasNullDefault(t avro.AvroType) bool {
 		return union.NullIndex() == 0
 	}
 	return false
+}
+
+func lowerFirst(s string) string {
+	return strings.ToLower(s[0:1]) + s[1:]
 }

@@ -7,6 +7,23 @@ import (
 	"github.com/actgardner/gogen-avro/v10/vm/types"
 	"github.com/actgardner/gogen-avro/v10/vm"
 )
+{{ $pGoType := plural .ItemType.GoType -}}
+type {{ $pGoType }} {{ .GoType }}
+
+func (_ {{ $pGoType }}) SetBoolean(v bool) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) SetInt(v int32) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) SetLong(v int64) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) SetFloat(v float32) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) SetDouble(v float64) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) SetBytes(v []byte) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) SetString(v string) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) Get(i int) types.Field { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) AppendMap(key string) types.Field { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) Finalize() { }
+func (_ {{ $pGoType }}) SetDefault(i int) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) HintSize(s int) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) NullField(i int) { panic("Unsupported operation") }
+func (_ {{ $pGoType }}) AppendArray() types.Field { panic("Unsupported operation") }
 
 func {{ .SerializerMethod }}(r {{ .GoType }}, w io.Writer) error {
 	err := vm.WriteLong(int64(len(r)),w)

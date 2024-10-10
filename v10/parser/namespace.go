@@ -29,7 +29,7 @@ func NewNamespace(shortUnions bool) *Namespace {
 func (n *Namespace) RegisterDefinition(d avro.Definition) error {
 	if curDef, ok := n.Definitions[d.AvroName()]; ok {
 		if !reflect.DeepEqual(curDef, d) {
-			return fmt.Errorf("Conflicting definitions for %v", d.AvroName())
+			return fmt.Errorf("conflicting definitions for %v", d.AvroName())
 		}
 		return nil
 	}
@@ -38,7 +38,7 @@ func (n *Namespace) RegisterDefinition(d avro.Definition) error {
 
 	for _, alias := range d.Aliases() {
 		if existing, ok := n.Definitions[alias]; ok {
-			return fmt.Errorf("Alias for %q is %q, but %q is already aliased with that name", d.AvroName(), alias, existing.AvroName())
+			return fmt.Errorf("alias for %q is %q, but %q is already aliased with that name", d.AvroName(), alias, existing.AvroName())
 		}
 		n.Definitions[alias] = d
 	}
@@ -53,13 +53,17 @@ func ParseAvroName(enclosing, name string) avro.QualifiedName {
 	if lastIndex != -1 {
 		enclosing = name[:lastIndex]
 	}
-	return avro.QualifiedName{enclosing, name[lastIndex+1:]}
+	return avro.QualifiedName{
+		Namespace: enclosing,
+		Name:      name[lastIndex+1:],
+	}
 }
 
 // TypeForSchema accepts an Avro schema as a JSON string, decode it and return the AvroType defined at the top level:
-//    - a single record definition (JSON map)
-//    - a union of multiple types (JSON array)
-//    - an already-defined type (JSON string)
+//   - a single record definition (JSON map)
+//   - a union of multiple types (JSON array)
+//   - an already-defined type (JSON string)
+//
 // The Avro type defined at the top level and all the type definitions beneath it will also be added to this Namespace.
 func (n *Namespace) TypeForSchema(schemaJson []byte) (avro.AvroType, error) {
 	var schema interface{}
@@ -72,7 +76,7 @@ func (n *Namespace) TypeForSchema(schemaJson []byte) (avro.AvroType, error) {
 		return nil, err
 	}
 
-	n.Roots = append(n.Roots, &avro.FileRoot{field})
+	n.Roots = append(n.Roots, &avro.FileRoot{Type: field})
 
 	return field, nil
 }
@@ -102,7 +106,7 @@ func (n *Namespace) decodeRecordDefinition(namespace string, schemaMap map[strin
 	}
 
 	if typeStr != "record" {
-		return nil, fmt.Errorf("Type of record must be 'record'")
+		return nil, fmt.Errorf("type of record must be 'record'")
 	}
 
 	name, err := avroNameForDefinition(schemaMap, namespace)
@@ -200,7 +204,7 @@ func (n *Namespace) decodeEnumDefinition(namespace string, schemaMap map[string]
 	}
 
 	if typeStr != "enum" {
-		return nil, fmt.Errorf("Type of enum must be 'enum'")
+		return nil, fmt.Errorf("type of enum must be 'enum'")
 	}
 
 	name, err := avroNameForDefinition(schemaMap, namespace)
@@ -250,7 +254,7 @@ func (n *Namespace) decodeFixedDefinition(namespace string, schemaMap map[string
 	}
 
 	if typeStr != "fixed" {
-		return nil, fmt.Errorf("Type of fixed must be 'fixed'")
+		return nil, fmt.Errorf("type of fixed must be 'fixed'")
 	}
 
 	name, err := avroNameForDefinition(schemaMap, namespace)
@@ -406,7 +410,7 @@ func parseAliases(objectMap map[string]interface{}, namespace string) ([]avro.Qu
 
 	aliasList, ok := aliases.([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("Field aliases expected to be array, got %v", aliases)
+		return nil, fmt.Errorf("field aliases expected to be array, got %v", aliases)
 	}
 
 	qualifiedAliases := make([]avro.QualifiedName, 0, len(aliasList))
@@ -414,7 +418,7 @@ func parseAliases(objectMap map[string]interface{}, namespace string) ([]avro.Qu
 	for _, alias := range aliasList {
 		aliasString, ok := alias.(string)
 		if !ok {
-			return nil, fmt.Errorf("Field aliases expected to be array of strings, got %v", aliases)
+			return nil, fmt.Errorf("field aliases expected to be array of strings, got %v", aliases)
 		}
 		qualifiedAliases = append(qualifiedAliases, ParseAvroName(namespace, aliasString))
 	}

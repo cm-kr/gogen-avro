@@ -1,6 +1,9 @@
 package generator
 
 import (
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+	"os"
 	"strings"
 	"unicode"
 )
@@ -19,7 +22,16 @@ func ToPublicName(name string) string {
 func ToPublicSimpleName(name string) string {
 	lastIndex := strings.LastIndex(name, ".")
 	name = name[lastIndex+1:]
-	return strings.Title(strings.Trim(name, "_"))
+	var (
+		err error
+		tag = language.English
+	)
+	if lan, ok := os.LookupEnv("LANG"); ok {
+		if tag, err = language.Parse(lan); err == nil {
+			return cases.Title(tag, cases.NoLower).String(strings.Trim(name, "_"))
+		}
+	}
+	return cases.Title(tag, cases.NoLower).String(strings.Trim(name, "_"))
 }
 
 // ToSnake makes filenames snake-case, taken from https://gist.github.com/elwinar/14e1e897fdbe4d3432e1

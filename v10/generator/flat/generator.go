@@ -1,6 +1,7 @@
 package flat
 
 import (
+	"errors"
 	"github.com/actgardner/gogen-avro/v10/generator"
 	"github.com/actgardner/gogen-avro/v10/generator/flat/templates"
 	avro "github.com/actgardner/gogen-avro/v10/schema"
@@ -26,19 +27,19 @@ func (f *FlatPackageGenerator) Add(def avro.Node) error {
 		filename := generator.ToSnake(def.Name()) + ".go"
 		f.files.AddFile(filename, file)
 	} else {
-		if err != templates.NoTemplateForType {
+		if !errors.Is(err, templates.NoTemplateForType) {
 			return err
 		}
 	}
 
 	if r, ok := def.(*avro.RecordDefinition); ok && f.containers {
-		if err := f.addRecordContainer(r); err != nil {
+		if err = f.addRecordContainer(r); err != nil {
 			return err
 		}
 	}
 
 	for _, child := range def.Children() {
-		if err := f.Add(child); err != nil {
+		if err = f.Add(child); err != nil {
 			return err
 		}
 	}

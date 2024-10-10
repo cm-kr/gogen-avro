@@ -4,7 +4,7 @@ package generator
 import (
 	"fmt"
 	gofmt "go/format"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
 )
@@ -25,12 +25,12 @@ func (p *Package) WriteFiles(targetDir string) error {
 		targetFile := filepath.Join(targetDir, name)
 		fileContent, err := gofmt.Source([]byte(fmt.Sprintf("%v\npackage %v\n%v", p.header, p.name, body)))
 		if err != nil {
-			return fmt.Errorf("Error writing file %v - %v", targetFile, err)
+			return fmt.Errorf("error writing file %v - %v", targetFile, err)
 		}
 
-		err = ioutil.WriteFile(targetFile, []byte(fileContent), 0640)
+		err = os.WriteFile(targetFile, []byte(fileContent), 0640)
 		if err != nil {
-			return fmt.Errorf("Error writing file %v - %v", targetFile, err)
+			return fmt.Errorf("error writing file %v - %v", targetFile, err)
 		}
 	}
 	return nil
@@ -38,7 +38,7 @@ func (p *Package) WriteFiles(targetDir string) error {
 
 func (p *Package) Files() []string {
 	files := make([]string, 0)
-	for file, _ := range p.files {
+	for file := range p.files {
 		files = append(files, file)
 	}
 	sort.Strings(files)

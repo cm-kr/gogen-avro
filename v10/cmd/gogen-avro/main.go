@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,37 +30,36 @@ func main() {
 	}
 
 	for _, fileName := range cfg.files {
-		schema, err := ioutil.ReadFile(fileName)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading file %q - %v\n", fileName, err)
+		var (
+			schema []byte
+		)
+		if schema, err = os.ReadFile(fileName); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Error reading file %q - %v\n", fileName, err)
 			os.Exit(2)
 		}
 
-		_, err = namespace.TypeForSchema(schema)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error decoding schema for file %q - %v\n", fileName, err)
+		if _, err = namespace.TypeForSchema(schema); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Error decoding schema for file %q - %v\n", fileName, err)
 			os.Exit(3)
 		}
 	}
 
 	for _, def := range namespace.Roots {
-		if err := resolver.ResolveDefinition(def, namespace.Definitions); err != nil {
-			fmt.Fprintf(os.Stderr, "Error resolving definition for type %q - %v\n", def.Name(), err)
+		if err = resolver.ResolveDefinition(def, namespace.Definitions); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Error resolving definition for type %q - %v\n", def.Name(), err)
 			os.Exit(4)
 		}
 	}
 
 	for _, def := range namespace.Roots {
-		err = gen.Add(def)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error generating code for schema - %v\n", err)
+		if err = gen.Add(def); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Error generating code for schema - %v\n", err)
 			os.Exit(5)
 		}
 	}
 
-	err = pkg.WriteFiles(cfg.targetDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing source files to directory %q - %v\n", cfg.targetDir, err)
+	if err = pkg.WriteFiles(cfg.targetDir); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error writing source files to directory %q - %v\n", cfg.targetDir, err)
 		os.Exit(6)
 	}
 }

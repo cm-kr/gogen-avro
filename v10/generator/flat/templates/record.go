@@ -144,8 +144,8 @@ func (r *{{ .GoType }}) Get(i int) types.Field {
 		{{ if ne $field.Type.WrapperType "" -}}
 			{{ if $.IsSimpleNullUnion $field -}}
 			if r.{{ $field.GoName }} == nil {
-				var {{ $field.GoName }} = new({{slice .Type.GoType 1 }})
-				r.{{ $field.GoName }} = {{ $field.GoName }}
+				var {{ lowerFirst $field.GoName }} = new({{slice .Type.GoType 1 }})
+				r.{{ $field.GoName }} = {{ lowerFirst $field.GoName }}
 			}
 			{{ if $.IsSimpleNullUnionOfPrimitive $field -}}
 			w := {{ $field.Type.WrapperType }}{Target: r.{{ $field.GoName }}}

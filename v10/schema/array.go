@@ -17,57 +17,57 @@ func NewArrayField(itemType AvroType, definition map[string]interface{}) *ArrayF
 	}
 }
 
-func (s *ArrayField) Name() string {
-	return "Array" + s.itemType.Name()
+func (r *ArrayField) Name() string {
+	return "Array" + r.itemType.Name()
 }
 
 func (r *ArrayField) filename() string {
 	return generator.ToSnake(r.Name()) + ".go"
 }
 
-func (s *ArrayField) GoType() string {
-	return fmt.Sprintf("[]%v", s.itemType.GoType())
+func (r *ArrayField) GoType() string {
+	return fmt.Sprintf("[]%v", r.itemType.GoType())
 }
 
-func (s *ArrayField) SerializerMethod() string {
-	return fmt.Sprintf("write%v", s.Name())
+func (r *ArrayField) SerializerMethod() string {
+	return fmt.Sprintf("write%v", r.Name())
 }
 
-func (s *ArrayField) ItemType() AvroType {
-	return s.itemType
+func (r *ArrayField) ItemType() AvroType {
+	return r.itemType
 }
 
-func (s *ArrayField) Attribute(name string) interface{} {
-	return s.definition[name]
+func (r *ArrayField) Attribute(name string) interface{} {
+	return r.definition[name]
 }
 
-func (s *ArrayField) Definition(scope map[QualifiedName]interface{}) (interface{}, error) {
-	def := copyDefinition(s.definition)
+func (r *ArrayField) Definition(scope map[QualifiedName]interface{}) (interface{}, error) {
+	def := copyDefinition(r.definition)
 	var err error
-	def["items"], err = s.itemType.Definition(scope)
+	def["items"], err = r.itemType.Definition(scope)
 	if err != nil {
 		return nil, err
 	}
 	return def, nil
 }
 
-func (s *ArrayField) ConstructorMethod() string {
-	return fmt.Sprintf("make(%v, 0)", s.GoType())
+func (r *ArrayField) ConstructorMethod() string {
+	return fmt.Sprintf("make(%v, 0)", r.GoType())
 }
 
-func (s *ArrayField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
+func (r *ArrayField) DefaultValue(lvalue string, rvalue interface{}) (string, error) {
 	items, ok := rvalue.([]interface{})
 	if !ok {
 		return "", fmt.Errorf("Expected array as default for %v, got %v", lvalue, rvalue)
 	}
 
-	setters := fmt.Sprintf("%v = make(%v,%v)\n", lvalue, s.GoType(), len(items))
+	setters := fmt.Sprintf("%v = make(%v,%v)\n", lvalue, r.GoType(), len(items))
 	for i, item := range items {
-		if c, ok := getConstructableForType(s.itemType); ok {
+		if c, ok := getConstructableForType(r.itemType); ok {
 			setters += fmt.Sprintf("%v[%v] = %v\n", lvalue, i, c.ConstructorMethod())
 		}
 
-		setter, err := s.itemType.DefaultValue(fmt.Sprintf("%v[%v]", lvalue, i), item)
+		setter, err := r.itemType.DefaultValue(fmt.Sprintf("%v[%v]", lvalue, i), item)
 		if err != nil {
 			return "", err
 		}
@@ -77,73 +77,76 @@ func (s *ArrayField) DefaultValue(lvalue string, rvalue interface{}) (string, er
 	return setters, nil
 }
 
-func (s *ArrayField) WrapperType() string {
-	if union, ok := s.itemType.(*UnionField); ok {
-		if union.IsSimpleNullUnion() && s.itemType.IsPrimitive() {
+func (r *ArrayField) WrapperType() string {
+	if union, ok := r.itemType.(*UnionField); ok {
+		if union.IsSimpleNullUnion() && r.itemType.IsPrimitive() {
 			return fmt.Sprintf("ArrayOfNullable%vUnion", union.itemType[union.NonNullIndex()].Name())
 		}
 	}
 
-	return fmt.Sprintf("%vWrapper", s.Name())
+	return fmt.Sprintf("%vWrapper", r.Name())
 }
 
-func (s *ArrayField) WrapperPointer() bool {
+func (r *ArrayField) WrapperPointer() bool {
 	return false
 }
 
-func (s *ArrayField) IsReadableBy(f AvroType) bool {
+func (r *ArrayField) IsReadableBy(f AvroType) bool {
 	if union, ok := f.(*UnionField); ok {
 		for _, t := range union.AvroTypes() {
-			if s.IsReadableBy(t) {
+			if r.IsReadableBy(t) {
 				return true
 			}
 		}
 	}
 
 	if reader, ok := f.(*ArrayField); ok {
-		return s.ItemType().IsReadableBy(reader.ItemType())
+		return r.ItemType().IsReadableBy(reader.ItemType())
 	}
 	return false
 }
 
-func (s *ArrayField) ItemConstructable() string {
-	if constructor, ok := getConstructableForType(s.itemType); ok {
+func (r *ArrayField) ItemConstructable() string {
+	if constructor, ok := getConstructableForType(r.itemType); ok {
 		return fmt.Sprintf("v = %v\n", constructor.ConstructorMethod())
 	}
 	return ""
 }
 
-func (s *ArrayField) Children() []AvroType {
-	return []AvroType{s.itemType}
+func (r *ArrayField) Children() []AvroType {
+	return []AvroType{r.itemType}
 }
 
-func (s *ArrayField) UnionKey() string {
+func (r *ArrayField) UnionKey() string {
 	return "array"
 }
 
-func (s *ArrayField) IsPrimitive() bool { return false }
+func (r *ArrayField) IsPrimitive() bool { return false }
 
-func (s *ArrayField) IsSimpleNullUnion() bool {
-	unionField, ok := s.itemType.(*UnionField)
-	return ok && unionField.IsSimpleNullUnion()
+func (r *ArrayField) IsSimpleNullUnion() bool {
+	if unionField, ok := r.itemType.(*UnionField); !ok {
+		return ok
+	} else {
+		return unionField.IsSimpleNullUnion()
+	}
 }
 
-func (s *ArrayField) SimpleNullUnionNullIndex() int {
-	if unionField, ok := s.itemType.(*UnionField); ok {
+func (r *ArrayField) SimpleNullUnionNullIndex() int {
+	if unionField, ok := r.itemType.(*UnionField); ok {
 		return unionField.NullIndex()
 	}
 	return -1
 }
 
-func (s *ArrayField) SimpleNullUnionNonNullIndex() int {
-	if unionField, ok := s.itemType.(*UnionField); ok {
+func (r *ArrayField) SimpleNullUnionNonNullIndex() int {
+	if unionField, ok := r.itemType.(*UnionField); ok {
 		return unionField.NonNullIndex()
 	}
 	return -1
 }
 
-func (s *ArrayField) SimpleNullUnionItemType() string {
-	if unionField, ok := s.itemType.(*UnionField); ok {
+func (r *ArrayField) SimpleNullUnionItemType() string {
+	if unionField, ok := r.itemType.(*UnionField); ok {
 		return unionField.itemType[unionField.NonNullIndex()].Name()
 	}
 	return ""

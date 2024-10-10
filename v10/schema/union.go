@@ -3,10 +3,17 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gertd/go-pluralize"
 	"strings"
 
 	"github.com/actgardner/gogen-avro/v10/generator"
 )
+
+var pc *pluralize.Client
+
+func init() {
+	pc = pluralize.NewClient()
+}
 
 type UnionField struct {
 	name              string
@@ -58,6 +65,10 @@ func (s *UnionField) GoType() string {
 		return s.Name()
 	}
 	if s.isSimpleNullUnion {
+		nni := s.AvroTypes()[s.NonNullIndex()]
+		if at, ok := nni.(*ArrayField); ok {
+			return "*" + pc.Plural(at.itemType.GoType())
+		}
 		return "*" + s.AvroTypes()[s.NonNullIndex()].GoType()
 	}
 	return "*" + s.Name()
@@ -90,7 +101,7 @@ func (s *UnionField) ItemConstructor(f AvroType) string {
 	return ""
 }
 
-func (s *UnionField) Attribute(name string) interface{} {
+func (s *UnionField) Attribute(_ string) interface{} {
 	return nil
 }
 

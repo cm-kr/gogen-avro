@@ -3,10 +3,10 @@ package schema
 type AvroType interface {
 	Name() string
 	GoType() string
-	// The key to use in JSON-encoding a union with this value
+	// UnionKey The key to use in JSON-encoding a union with this value
 	UnionKey() string
 
-	// The name of the method which writes this field onto the wire
+	// SerializerMethod The name of the method which writes this field onto the wire
 	SerializerMethod() string
 
 	Children() []AvroType

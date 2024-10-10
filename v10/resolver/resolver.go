@@ -22,7 +22,7 @@ func resolveReferences(t avro.AvroType, defs map[avro.QualifiedName]avro.Definit
 	if ref, ok := t.(*avro.Reference); ok {
 		ref.Def, ok = defs[ref.TypeName]
 		if !ok {
-			return fmt.Errorf("Unable to resolve type reference %v", ref.TypeName)
+			return fmt.Errorf("unable to resolve type reference %v", ref.TypeName)
 		}
 		return nil
 	}
